@@ -1,0 +1,6 @@
+{
+  "name": "CampusConnect – Smart Student Hub",
+  "description": "AI-powered college student management platform for study materials, Gemini AI doubt solving, exam preparation, and smart attendance tracking.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

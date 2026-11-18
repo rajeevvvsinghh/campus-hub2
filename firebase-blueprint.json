@@ -1,0 +1,502 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user account and academic metadata.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "role": { "type": "string", "enum": ["student", "faculty", "admin"] },
+        "departmentId": { "type": "string", "maxLength": 64 },
+        "courseName": { "type": "string", "maxLength": 120 },
+        "semester": { "type": "integer" },
+        "rollNumber": { "type": "string", "maxLength": 40 },
+        "avatarUrl": { "type": "string", "maxLength": 500 },
+        "targetAttendance": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "email", "role", "createdAt", "updatedAt"]
+    },
+    "StudentRosterEntry": {
+      "title": "StudentRosterEntry",
+      "description": "Non-PII academic roster entry visible to faculty and admins.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "rollNumber": { "type": "string", "maxLength": 40 },
+        "departmentId": { "type": "string", "maxLength": 64 },
+        "courseName": { "type": "string", "maxLength": 120 },
+        "semester": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "departmentId", "semester", "updatedAt"]
+    },
+    "AdminGrant": {
+      "title": "AdminGrant",
+      "description": "Trusted registry of administrator UIDs.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "grantedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "grantedBy", "createdAt"]
+    },
+    "FacultyGrant": {
+      "title": "FacultyGrant",
+      "description": "Trusted registry of faculty UIDs.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "departmentId": { "type": "string", "maxLength": 64 },
+        "grantedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "grantedBy", "createdAt"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Academic department and offered degree courses.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "code": { "type": "string", "minLength": 2, "maxLength": 20 },
+        "courses": { "type": "array" },
+        "semestersCount": { "type": "integer" },
+        "isDemo": { "type": "boolean" },
+        "createdByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "code", "courses", "semestersCount", "isDemo", "createdByUid", "createdAt", "updatedAt"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "Course subject organized by department and semester with units.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "code": { "type": "string", "minLength": 2, "maxLength": 24 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "departmentId": { "type": "string", "maxLength": 64 },
+        "courseName": { "type": "string", "maxLength": 120 },
+        "semester": { "type": "integer" },
+        "credits": { "type": "integer" },
+        "facultyName": { "type": "string", "maxLength": 100 },
+        "units": { "type": "array" },
+        "isDemo": { "type": "boolean" },
+        "createdByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "code", "name", "departmentId", "courseName", "semester", "credits", "units", "isDemo", "createdByUid", "createdAt", "updatedAt"]
+    },
+    "StudyMaterial": {
+      "title": "StudyMaterial",
+      "description": "Study material document (notes, books, PYQ, syllabus, assignment, slides).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "type": { "type": "string", "enum": ["notes", "books", "pyq", "syllabus", "assignment", "slides"] },
+        "departmentId": { "type": "string", "maxLength": 64 },
+        "courseName": { "type": "string", "maxLength": 120 },
+        "semester": { "type": "integer" },
+        "subjectId": { "type": "string", "maxLength": 64 },
+        "subjectName": { "type": "string", "maxLength": 140 },
+        "unit": { "type": "string", "maxLength": 100 },
+        "fileUrl": { "type": "string", "maxLength": 2000 },
+        "fileName": { "type": "string", "maxLength": 200 },
+        "fileSizeLabel": { "type": "string", "maxLength": 32 },
+        "contentPreview": { "type": "string", "maxLength": 8000 },
+        "uploadedByUid": { "type": "string", "maxLength": 128 },
+        "uploadedByName": { "type": "string", "maxLength": 100 },
+        "isOfficial": { "type": "boolean" },
+        "isDemo": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "type", "departmentId", "courseName", "semester", "subjectId", "subjectName", "unit", "fileName", "uploadedByUid", "uploadedByName", "isOfficial", "isDemo", "createdAt", "updatedAt"]
+    },
+    "UserBookmark": {
+      "title": "UserBookmark",
+      "description": "Per-user bookmark and recently viewed tracking for study materials.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "maxLength": 128 },
+        "materialId": { "type": "string", "maxLength": 64 },
+        "isBookmarked": { "type": "boolean" },
+        "lastViewedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "materialId", "isBookmarked", "updatedAt"]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Subject-wise attendance counters (personal student tracking or official faculty record).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentUid": { "type": "string", "maxLength": 128 },
+        "studentName": { "type": "string", "maxLength": 100 },
+        "subjectId": { "type": "string", "maxLength": 64 },
+        "subjectCode": { "type": "string", "maxLength": 24 },
+        "subjectName": { "type": "string", "maxLength": 140 },
+        "classesAttended": { "type": "integer" },
+        "totalClasses": { "type": "integer" },
+        "recordType": { "type": "string", "enum": ["personal", "official"] },
+        "isDemo": { "type": "boolean" },
+        "updatedByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentUid", "subjectId", "subjectCode", "subjectName", "classesAttended", "totalClasses", "recordType", "isDemo", "updatedByUid", "createdAt", "updatedAt"]
+    },
+    "AttendanceLog": {
+      "title": "AttendanceLog",
+      "description": "Date-stamped attendance history log entry.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentUid": { "type": "string", "maxLength": 128 },
+        "subjectId": { "type": "string", "maxLength": 64 },
+        "subjectName": { "type": "string", "maxLength": 140 },
+        "date": { "type": "string", "maxLength": 32 },
+        "status": { "type": "string", "enum": ["present", "absent", "late", "cancelled"] },
+        "recordType": { "type": "string", "enum": ["personal", "official"] },
+        "note": { "type": "string", "maxLength": 240 },
+        "loggedByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentUid", "subjectId", "subjectName", "date", "status", "recordType", "loggedByUid", "createdAt"]
+    },
+    "ExamSchedule": {
+      "title": "ExamSchedule",
+      "description": "Semester examination timetable entry.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "subjectId": { "type": "string", "maxLength": 64 },
+        "subjectCode": { "type": "string", "maxLength": 24 },
+        "subjectName": { "type": "string", "maxLength": 140 },
+        "semester": { "type": "integer" },
+        "examType": { "type": "string", "enum": ["midterm", "final", "practical", "quiz"] },
+        "examDate": { "type": "string", "maxLength": 32 },
+        "startTime": { "type": "string", "maxLength": 16 },
+        "endTime": { "type": "string", "maxLength": 16 },
+        "venue": { "type": "string", "maxLength": 100 },
+        "syllabusUnits": { "type": "string", "maxLength": 300 },
+        "isDemo": { "type": "boolean" },
+        "createdByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "subjectId", "subjectCode", "subjectName", "semester", "examType", "examDate", "startTime", "endTime", "venue", "isDemo", "createdByUid", "createdAt", "updatedAt"]
+    },
+    "StudyTask": {
+      "title": "StudyTask",
+      "description": "Personal syllabus unit checklist, daily goal, assignment, or revision task.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "maxLength": 128 },
+        "subjectId": { "type": "string", "maxLength": 64 },
+        "subjectName": { "type": "string", "maxLength": 140 },
+        "unit": { "type": "string", "maxLength": 100 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "dueDate": { "type": "string", "maxLength": 32 },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "category": { "type": "string", "enum": ["syllabus", "revision", "goal", "assignment"] },
+        "completed": { "type": "boolean" },
+        "isDemo": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "subjectId", "subjectName", "title", "priority", "category", "completed", "isDemo", "createdAt", "updatedAt"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "College and department announcements published by faculty or admins.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "body": { "type": "string", "minLength": 2, "maxLength": 2000 },
+        "category": { "type": "string", "enum": ["academic", "exam", "event", "urgent"] },
+        "departmentId": { "type": "string", "maxLength": 64 },
+        "authorUid": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "authorRole": { "type": "string", "enum": ["faculty", "admin"] },
+        "isPinned": { "type": "boolean" },
+        "isDemo": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "body", "category", "authorUid", "authorName", "authorRole", "isPinned", "isDemo", "createdAt", "updatedAt"]
+    },
+    "TimetableSlot": {
+      "title": "TimetableSlot",
+      "description": "Weekly class schedule slot.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "dayOfWeek": { "type": "integer" },
+        "startTime": { "type": "string", "maxLength": 16 },
+        "endTime": { "type": "string", "maxLength": 16 },
+        "subjectId": { "type": "string", "maxLength": 64 },
+        "subjectCode": { "type": "string", "maxLength": 24 },
+        "subjectName": { "type": "string", "maxLength": 140 },
+        "room": { "type": "string", "maxLength": 60 },
+        "instructor": { "type": "string", "maxLength": 100 },
+        "semester": { "type": "integer" },
+        "departmentId": { "type": "string", "maxLength": 64 },
+        "isDemo": { "type": "boolean" },
+        "createdByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "dayOfWeek", "startTime", "endTime", "subjectId", "subjectCode", "subjectName", "room", "instructor", "semester", "departmentId", "isDemo", "createdByUid", "createdAt", "updatedAt"]
+    },
+    "AiChatSession": {
+      "title": "AiChatSession",
+      "description": "Persisted AI Doubt Solver conversation history.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 160 },
+        "subjectName": { "type": "string", "maxLength": 140 },
+        "language": { "type": "string", "enum": ["en", "hi"] },
+        "messages": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "title", "language", "messages", "createdAt", "updatedAt"]
+    },
+    "PlatformSetting": {
+      "title": "PlatformSetting",
+      "description": "Institution-wide configuration such as required attendance percentage.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "institutionName": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "defaultRequiredAttendance": { "type": "number" },
+        "academicYear": { "type": "string", "maxLength": 32 },
+        "activeSemester": { "type": "integer" },
+        "updatedByUid": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "institutionName", "defaultRequiredAttendance", "academicYear", "activeSemester", "updatedByUid", "updatedAt"]
+    },
+    "StudyRoom": {
+      "title": "StudyRoom",
+      "description": "Virtual group study session room organized by subject.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "topic": { "type": "string", "maxLength": 240 },
+        "subjectId": { "type": "string", "maxLength": 64 },
+        "subjectCode": { "type": "string", "maxLength": 24 },
+        "subjectName": { "type": "string", "maxLength": 140 },
+        "semester": { "type": "integer" },
+        "hostUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "hostName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "isActive": { "type": "boolean" },
+        "isDemo": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "subjectId", "subjectCode", "subjectName", "semester", "hostUid", "hostName", "isActive", "isDemo", "createdAt", "updatedAt"]
+    },
+    "StudyRoomParticipant": {
+      "title": "StudyRoomParticipant",
+      "description": "Active student or faculty participant inside a virtual study room.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "roomId": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "subjectId": { "type": "string", "maxLength": 64 },
+        "subjectName": { "type": "string", "maxLength": 140 },
+        "studyFocus": { "type": "string", "maxLength": 160 },
+        "colorHex": { "type": "string", "maxLength": 16 },
+        "status": { "type": "string", "enum": ["studying", "break", "away"] },
+        "joinedAt": { "type": "string", "format": "date-time" },
+        "lastActiveAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "roomId", "displayName", "subjectId", "subjectName", "status", "joinedAt", "lastActiveAt"]
+    },
+    "WhiteboardStroke": {
+      "title": "WhiteboardStroke",
+      "description": "Shared whiteboard drawing primitive or note persisted inside a study room.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "roomId": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "tool": { "type": "string", "enum": ["pen", "highlighter", "rect", "circle", "text", "eraser"] },
+        "color": { "type": "string", "maxLength": 24 },
+        "strokeWidth": { "type": "number" },
+        "pointsJson": { "type": "string", "maxLength": 24000 },
+        "text": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "roomId", "authorUid", "authorName", "tool", "color", "strokeWidth", "pointsJson", "createdAt"]
+    },
+    "StudyPresence": {
+      "title": "StudyPresence",
+      "description": "Non-PII subject-level study status so peers can see who else is studying the same subject.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "subjectId": { "type": "string", "maxLength": 64 },
+        "subjectCode": { "type": "string", "maxLength": 24 },
+        "subjectName": { "type": "string", "maxLength": 140 },
+        "roomId": { "type": "string", "maxLength": 64 },
+        "roomTitle": { "type": "string", "maxLength": 140 },
+        "studyGoal": { "type": "string", "maxLength": 160 },
+        "isActive": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "subjectId", "subjectCode", "subjectName", "isActive", "updatedAt"]
+    },
+    "StudyContributorStat": {
+      "title": "StudyContributorStat",
+      "description": "Public non-PII Study Room leaderboard metrics tracking time spent, resources shared, and sessions joined.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "primarySubjectId": { "type": "string", "maxLength": 64 },
+        "primarySubjectCode": { "type": "string", "maxLength": 24 },
+        "primarySubjectName": { "type": "string", "maxLength": 140 },
+        "totalMinutes": { "type": "integer" },
+        "resourcesSharedCount": { "type": "integer" },
+        "sessionsJoined": { "type": "integer" },
+        "points": { "type": "integer" },
+        "isDemo": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "totalMinutes", "resourcesSharedCount", "sessionsJoined", "points", "isDemo", "updatedAt"]
+    },
+    "StudyRoomResource": {
+      "title": "StudyRoomResource",
+      "description": "Study material, reference link, or revision snippet shared by a participant inside a study room.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "roomId": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "resourceType": { "type": "string", "enum": ["library-note", "link", "snippet"] },
+        "materialId": { "type": "string", "maxLength": 64 },
+        "url": { "type": "string", "maxLength": 1000 },
+        "noteText": { "type": "string", "maxLength": 1000 },
+        "subjectCode": { "type": "string", "maxLength": 24 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "roomId", "authorUid", "authorName", "title", "resourceType", "subjectCode", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profiles isolated by owner and admin."
+    },
+    "/studentRosters/{studentId}": {
+      "schema": { "$ref": "#/entities/StudentRosterEntry" },
+      "description": "Non-PII student roster entries for faculty attendance and academic progress."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminGrant" },
+      "description": "Admin role grants."
+    },
+    "/faculty/{userId}": {
+      "schema": { "$ref": "#/entities/FacultyGrant" },
+      "description": "Faculty role grants."
+    },
+    "/departments/{deptId}": {
+      "schema": { "$ref": "#/entities/Department" },
+      "description": "Departments and degree programs."
+    },
+    "/subjects/{subjectId}": {
+      "schema": { "$ref": "#/entities/Subject" },
+      "description": "Subjects and unit syllabi."
+    },
+    "/materials/{materialId}": {
+      "schema": { "$ref": "#/entities/StudyMaterial" },
+      "description": "Centralized study material library."
+    },
+    "/userBookmarks/{bookmarkId}": {
+      "schema": { "$ref": "#/entities/UserBookmark" },
+      "description": "User bookmarks and recently viewed materials."
+    },
+    "/attendanceSubjects/{recordId}": {
+      "schema": { "$ref": "#/entities/AttendanceRecord" },
+      "description": "Personal and official subject-wise attendance records."
+    },
+    "/attendanceLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AttendanceLog" },
+      "description": "Attendance history logs."
+    },
+    "/exams/{examId}": {
+      "schema": { "$ref": "#/entities/ExamSchedule" },
+      "description": "Examination timetable."
+    },
+    "/studyTasks/{taskId}": {
+      "schema": { "$ref": "#/entities/StudyTask" },
+      "description": "Personal study planner tasks and syllabus checklists."
+    },
+    "/announcements/{announcementId}": {
+      "schema": { "$ref": "#/entities/Announcement" },
+      "description": "Official campus announcements."
+    },
+    "/timetable/{slotId}": {
+      "schema": { "$ref": "#/entities/TimetableSlot" },
+      "description": "Class timetable slots."
+    },
+    "/aiChats/{chatId}": {
+      "schema": { "$ref": "#/entities/AiChatSession" },
+      "description": "AI Doubt Solver chat sessions."
+    },
+    "/platformSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/PlatformSetting" },
+      "description": "Institution settings."
+    },
+    "/studyRooms/{roomId}": {
+      "schema": { "$ref": "#/entities/StudyRoom" },
+      "description": "Virtual group study session rooms."
+    },
+    "/studyRooms/{roomId}/participants/{participantUid}": {
+      "schema": { "$ref": "#/entities/StudyRoomParticipant" },
+      "description": "Active participants inside a study room."
+    },
+    "/studyRooms/{roomId}/strokes/{strokeId}": {
+      "schema": { "$ref": "#/entities/WhiteboardStroke" },
+      "description": "Shared whiteboard strokes inside a study room."
+    },
+    "/studyRooms/{roomId}/resources/{resourceId}": {
+      "schema": { "$ref": "#/entities/StudyRoomResource" },
+      "description": "Shared notes, links, and study snippets inside a study room."
+    },
+    "/studyPresence/{userId}": {
+      "schema": { "$ref": "#/entities/StudyPresence" },
+      "description": "Public campus study presence showing which subject peers are studying."
+    },
+    "/studyContributors/{userId}": {
+      "schema": { "$ref": "#/entities/StudyContributorStat" },
+      "description": "Leaderboard metrics for Study Room time spent and resources shared."
+    }
+  }
+}
