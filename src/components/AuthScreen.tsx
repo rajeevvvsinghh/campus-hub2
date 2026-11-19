@@ -249,7 +249,7 @@ export const AuthScreen: React.FC = () => {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Aarav Sharma"
+                    placeholder="e.g. Rajeev Singh"
                     required
                     className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-600"
                   />

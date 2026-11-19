@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Award,
   BookOpen,
@@ -83,12 +83,12 @@ const HISTORICAL_SEMESTERS: SemesterStat[] = [
   },
   {
     semester: 5,
-    label: 'Sem 5 (Current)',
+    label: 'Sem 5',
     sgpa: 3.88,
     cgpa: 3.80,
     creditsAttempted: 18,
     creditsEarned: 14,
-    status: 'active',
+    status: 'upcoming',
     standing: 'Dean’s Honor Roll (Projected)',
   },
   {
@@ -133,9 +133,35 @@ export const SemesterOverview: React.FC = () => {
     platformSettings,
   } = useCampus();
 
-  const currentActiveSemester = profile?.semester || 5;
+  const currentActiveSemester = profile?.semester || 3;
   const [selectedSemester, setSelectedSemester] = useState<number>(currentActiveSemester);
   const [activeChartTab, setActiveChartTab] = useState<'gpa' | 'credits'>('gpa');
+
+  useEffect(() => {
+    setSelectedSemester(currentActiveSemester);
+  }, [currentActiveSemester]);
+
+  const dynamicSemesters = useMemo<SemesterStat[]>(() => {
+    return HISTORICAL_SEMESTERS.map((item) => {
+      const status: SemesterStat['status'] =
+        item.semester < currentActiveSemester
+          ? 'completed'
+          : item.semester === currentActiveSemester
+          ? 'active'
+          : 'upcoming';
+      return {
+        ...item,
+        status,
+        label: item.semester === currentActiveSemester ? `Sem ${item.semester} (Current)` : `Sem ${item.semester}`,
+        creditsEarned:
+          status === 'completed'
+            ? item.creditsAttempted
+            : status === 'active'
+            ? Math.min(item.creditsAttempted, 14)
+            : 0,
+      };
+    });
+  }, [currentActiveSemester]);
 
   const requiredPct = profile?.targetAttendance || platformSettings.defaultRequiredAttendance || 75;
 
@@ -212,7 +238,7 @@ export const SemesterOverview: React.FC = () => {
     // Degree totals
     const totalDegreeCredits = 160;
     // Calculate total earned credits up to current semester
-    const priorCompleted = HISTORICAL_SEMESTERS.filter((s) => s.status === 'completed');
+    const priorCompleted = dynamicSemesters.filter((s) => s.status === 'completed');
     const priorEarned = priorCompleted.reduce((acc, s) => acc + s.creditsEarned, 0);
     const currentEarned = selectedSemester === currentActiveSemester ? 14 : selectedSemester < currentActiveSemester ? totalCredits : 0;
     const totalEarnedToDate = priorEarned + (selectedSemester >= currentActiveSemester ? currentEarned : 0);
@@ -226,7 +252,7 @@ export const SemesterOverview: React.FC = () => {
       totalEarnedToDate,
       degreeProgressPct,
     };
-  }, [semesterSubjects, selectedSemester, currentActiveSemester]);
+  }, [semesterSubjects, selectedSemester, currentActiveSemester, dynamicSemesters]);
 
   // Aggregated subject performance & attendance matrix
   const subjectPerformanceList = useMemo(() => {
@@ -300,9 +326,9 @@ export const SemesterOverview: React.FC = () => {
   // Selected semester GPA info
   const selectedSemInfo = useMemo(() => {
     return (
-      HISTORICAL_SEMESTERS.find((s) => s.semester === selectedSemester) || {
+      dynamicSemesters.find((s) => s.semester === selectedSemester) || {
         semester: selectedSemester,
-        label: `Sem ${selectedSemester}`,
+        label: selectedSemester === currentActiveSemester ? `Sem ${selectedSemester} (Current)` : `Sem ${selectedSemester}`,
         sgpa: 3.85,
         cgpa: 3.79,
         creditsAttempted: 20,
@@ -311,7 +337,7 @@ export const SemesterOverview: React.FC = () => {
         standing: 'Dean’s Honor Roll',
       }
     );
-  }, [selectedSemester, currentActiveSemester]);
+  }, [selectedSemester, currentActiveSemester, dynamicSemesters]);
 
   return (
     <div className="space-y-6">

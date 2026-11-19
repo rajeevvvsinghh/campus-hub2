@@ -652,7 +652,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
               {!avatarFailed && profile?.avatarUrl ? (
                 <img
                   src={profile.avatarUrl}
-                  alt={profile?.displayName || 'Student'}
+                  alt={profile?.displayName || 'Rajeev Singh'}
                   referrerPolicy="no-referrer"
                   onError={() => setAvatarFailed(true)}
                   className="w-7 h-7 rounded-lg object-cover"
@@ -662,12 +662,12 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
                   className="w-7 h-7 rounded-lg text-xs font-semibold flex items-center justify-center"
                   style={{ backgroundColor: 'var(--cc-accent)', color: 'var(--cc-accent-fg)' }}
                 >
-                  {(profile?.displayName || 'S').slice(0, 1).toUpperCase()}
+                  {(profile?.displayName || 'R').slice(0, 1).toUpperCase()}
                 </div>
               )}
               <div className="hidden sm:block text-left leading-tight">
                 <p className="text-xs font-medium text-slate-900 dark:text-white max-w-[120px] truncate">
-                  {profile?.displayName || 'Student'}
+                  {profile?.displayName || 'Rajeev Singh'}
                 </p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">
                   {activeRoleView}

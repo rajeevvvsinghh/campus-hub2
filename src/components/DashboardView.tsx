@@ -166,11 +166,11 @@ export const DashboardView: React.FC = () => {
       activeSemester: platformSettings.activeSemester,
       isDemoMode,
       student: {
-        displayName: profile?.displayName || 'Student',
+        displayName: profile?.displayName || 'Rajeev Singh',
         rollNumber: profile?.rollNumber || 'N/A',
         departmentName: deptName,
         courseName: profile?.courseName || 'B.Tech Computer Science',
-        semester: profile?.semester || platformSettings.activeSemester || 5,
+        semester: profile?.semester || platformSettings.activeSemester || 3,
       },
       requiredPercentage: requiredPct,
       attendanceRecords: myAttendance,
@@ -197,7 +197,7 @@ export const DashboardView: React.FC = () => {
               {profile?.courseName || 'B.Tech Computer Science'}
             </span>
             <span aria-hidden="true">·</span>
-            <span>Semester {profile?.semester || 5}</span>
+            <span>Semester {profile?.semester || 3}</span>
             <span aria-hidden="true">·</span>
             <span>{platformSettings.academicYear}</span>
             <span aria-hidden="true">·</span>
@@ -206,7 +206,7 @@ export const DashboardView: React.FC = () => {
             </span>
           </div>
           <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
-            Welcome back, {profile?.displayName || 'Student'}
+            Welcome back, {profile?.displayName || 'Rajeev Singh'}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
             {activeRoleView === 'student'
@@ -321,7 +321,7 @@ export const DashboardView: React.FC = () => {
           {dashboardTab === 'all'
             ? 'Complete Academic Hub · KPIs, Semester Weights & Schedule'
             : dashboardTab === 'semester'
-            ? `Semester ${profile?.semester || 5} · GPA Trajectory & Subject Credit Weights`
+            ? `Semester ${profile?.semester || 3} · GPA Trajectory & Subject Credit Weights`
             : `${DAY_NAMES[selectedDay]} · Timetable, Attendance & Task Queue`}
         </p>
       </section>
@@ -466,7 +466,7 @@ export const DashboardView: React.FC = () => {
                     Today’s Classes &amp; Schedule
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {DAY_NAMES[selectedDay]} · Semester {profile?.semester || 5}
+                    {DAY_NAMES[selectedDay]} · Semester {profile?.semester || 3}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-1 cc-segmented self-start sm:self-auto max-w-full">
@@ -776,7 +776,7 @@ export const DashboardView: React.FC = () => {
                     Report Snapshot
                   </span>
                   <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                    {platformSettings.academicYear} · Sem {profile?.semester || 5}
+                    {platformSettings.academicYear} · Sem {profile?.semester || 3}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

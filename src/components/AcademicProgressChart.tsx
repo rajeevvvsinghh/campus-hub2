@@ -44,11 +44,11 @@ interface StudyHourLog {
 }
 
 const DEFAULT_GRADE_HISTORY: SemesterGradeEntry[] = [
-  { semester: 1, label: 'Sem 1', sgpa: 3.48, credits: 20, termLabel: 'Fall 2024' },
-  { semester: 2, label: 'Sem 2', sgpa: 3.62, credits: 22, termLabel: 'Spring 2025' },
-  { semester: 3, label: 'Sem 3', sgpa: 3.74, credits: 21, termLabel: 'Fall 2025' },
-  { semester: 4, label: 'Sem 4', sgpa: 3.81, credits: 20, termLabel: 'Spring 2026' },
-  { semester: 5, label: 'Sem 5', sgpa: 3.88, credits: 18, termLabel: 'Current Term' },
+  { semester: 1, label: 'Sem 1', sgpa: 3.48, credits: 20, termLabel: 'Fall 2025' },
+  { semester: 2, label: 'Sem 2', sgpa: 3.62, credits: 22, termLabel: 'Spring 2026' },
+  { semester: 3, label: 'Sem 3', sgpa: 3.78, credits: 21, termLabel: 'Current Term' },
+  { semester: 4, label: 'Sem 4', sgpa: 3.81, credits: 20, termLabel: 'Spring 2027' },
+  { semester: 5, label: 'Sem 5', sgpa: 3.88, credits: 18, termLabel: 'Fall 2027' },
 ];
 
 const DAILY_HOUR_TEMPLATES = [2.5, 3.0, 4.2, 3.5, 4.8, 3.2, 4.0]; // Mon..Sun baseline
@@ -176,7 +176,7 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({ active, payload, label, mod
 export const AcademicProgressChart: React.FC = () => {
   const { profile, subjects, studyTasks, studyContributors } = useCampus();
   const uid = profile?.uid || 'guest';
-  const currentSem = Math.min(8, Math.max(1, profile?.semester || 5));
+  const currentSem = Math.min(8, Math.max(1, profile?.semester || 3));
 
   const [gradeMode, setGradeMode] = useState<'semester' | 'subject'>('semester');
   const [studyRange, setStudyRange] = useState<'daily' | 'weekly'>('daily');
@@ -187,7 +187,9 @@ export const AcademicProgressChart: React.FC = () => {
 
   // Persistent Grade History per user
   const gradeStorageKey = `skucampus_grade_history_${uid}`;
-  const [gradeHistory, setGradeHistory] = useState<SemesterGradeEntry[]>(DEFAULT_GRADE_HISTORY);
+  const [gradeHistory, setGradeHistory] = useState<SemesterGradeEntry[]>(() =>
+    DEFAULT_GRADE_HISTORY.filter((entry) => entry.semester <= 3)
+  );
 
   useEffect(() => {
     try {
@@ -203,7 +205,9 @@ export const AcademicProgressChart: React.FC = () => {
       // Ignore storage errors
     }
     setGradeHistory(
-      DEFAULT_GRADE_HISTORY.filter((entry) => entry.semester <= Math.max(currentSem, 5))
+      DEFAULT_GRADE_HISTORY.filter((entry) => entry.semester <= currentSem).map((entry) =>
+        entry.semester === currentSem ? { ...entry, termLabel: 'Current Term' } : entry
+      )
     );
   }, [gradeStorageKey, currentSem]);
 

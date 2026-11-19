@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ArrowRight,
   Bookmark,
   BookOpen,
   Building2,
@@ -11,8 +12,10 @@ import {
   Loader2,
   Lock,
   Megaphone,
+  Minus,
   Pin,
   Plus,
+  Save,
   Settings,
   Shield,
   Trash2,
@@ -1001,8 +1004,10 @@ export const ProfileSettingsView: React.FC<{ initialTab?: 'profile' | 'settings'
   const [rollNumber, setRollNumber] = useState(profile?.rollNumber || '');
   const [departmentId, setDepartmentId] = useState(profile?.departmentId || 'dept_cse');
   const [courseName, setCourseName] = useState(profile?.courseName || 'B.Tech Computer Science');
-  const [semester, setSemester] = useState(profile?.semester || 5);
+  const [semester, setSemester] = useState(profile?.semester || 3);
   const [targetAttendance, setTargetAttendance] = useState(profile?.targetAttendance || 75);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
   // Profile photo upload state
@@ -1023,9 +1028,27 @@ export const ProfileSettingsView: React.FC<{ initialTab?: 'profile' | 'settings'
     setRollNumber(profile?.rollNumber || '');
     setDepartmentId(profile?.departmentId || 'dept_cse');
     setCourseName(profile?.courseName || 'B.Tech Computer Science');
-    setSemester(profile?.semester || 5);
+    setSemester(profile?.semester || 3);
     setTargetAttendance(profile?.targetAttendance || 75);
   }, [profile?.uid, profile?.displayName, profile?.rollNumber, profile?.departmentId, profile?.courseName, profile?.semester, profile?.targetAttendance]);
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!profile) return false;
+    return (
+      displayName.trim() !== (profile.displayName || '').trim() ||
+      rollNumber.trim() !== (profile.rollNumber || '').trim() ||
+      departmentId !== (profile.departmentId || 'dept_cse') ||
+      courseName.trim() !== (profile.courseName || 'B.Tech Computer Science').trim() ||
+      semester !== (profile.semester || 3) ||
+      targetAttendance !== (profile.targetAttendance || 75)
+    );
+  }, [profile, displayName, rollNumber, departmentId, courseName, semester, targetAttendance]);
+
+  useEffect(() => {
+    if (hasUnsavedChanges && saved) {
+      setSaved(false);
+    }
+  }, [hasUnsavedChanges, saved]);
 
   useEffect(() => {
     setAvatarFailed(false);
@@ -1158,16 +1181,35 @@ export const ProfileSettingsView: React.FC<{ initialTab?: 'profile' | 'settings'
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await saveProfileChanges({
-      displayName,
-      rollNumber,
-      departmentId,
-      courseName,
-      semester,
-      targetAttendance,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    if (savingProfile) return;
+    setSaveError(null);
+    setSaved(false);
+    const trimmedName = displayName.trim();
+    if (!trimmedName) {
+      setSaveError('Please enter your Full Name before saving.');
+      return;
+    }
+    const clampedSemester = Math.max(1, Math.min(12, Math.round(Number(semester) || 3)));
+    const clampedTarget = Math.max(50, Math.min(100, Math.round(Number(targetAttendance) || 75)));
+    setSemester(clampedSemester);
+    setTargetAttendance(clampedTarget);
+
+    setSavingProfile(true);
+    try {
+      await saveProfileChanges({
+        displayName: trimmedName,
+        rollNumber: rollNumber.trim(),
+        departmentId,
+        courseName: courseName.trim() || 'B.Tech Computer Science',
+        semester: clampedSemester,
+        targetAttendance: clampedTarget,
+      });
+      setSaved(true);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Could not save profile changes.');
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   return (
@@ -1223,7 +1265,7 @@ export const ProfileSettingsView: React.FC<{ initialTab?: 'profile' | 'settings'
                     className="w-20 h-20 rounded-2xl text-2xl font-display font-bold flex items-center justify-center border border-slate-200/80 dark:border-white/[0.1]"
                     style={{ backgroundColor: 'var(--cc-accent-light)', color: 'var(--cc-accent)' }}
                   >
-                    {(profile?.displayName || 'S').slice(0, 1).toUpperCase()}
+                    {(profile?.displayName || 'R').slice(0, 1).toUpperCase()}
                   </div>
                 )}
               </div>
@@ -1388,98 +1430,246 @@ export const ProfileSettingsView: React.FC<{ initialTab?: 'profile' | 'settings'
           </section>
 
           <section className="cc-card p-4 sm:p-6 space-y-4">
-            <h3 className="font-display text-base font-semibold flex items-center gap-2 text-slate-900 dark:text-white">
-              <UserIcon className="w-4 h-4 text-blue-600" />
-              Academic Profile
-            </h3>
-            <form onSubmit={handleSave} className="space-y-3.5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <label className="block text-xs font-medium mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="cc-input w-full px-3 py-2 text-sm"
-                />
+                <h3 className="font-display text-base font-semibold flex items-center gap-2 text-slate-900 dark:text-white">
+                  <UserIcon className="w-4 h-4 text-[var(--cc-accent)]" />
+                  Academic Profile
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Updates here appear immediately on your Dashboard Home Screen
+                </p>
               </div>
-              <div>
-                <label className="block text-xs font-medium mb-1">Roll / ID Number</label>
-                <input
-                  type="text"
-                  value={rollNumber}
-                  onChange={(e) => setRollNumber(e.target.value)}
-                  className="cc-input w-full px-3 py-2 text-sm font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium mb-1">Department</label>
-                <select
-                  value={departmentId}
-                  onChange={(e) => setDepartmentId(e.target.value)}
-                  className="cc-input w-full px-3 py-2 text-sm"
+              {hasUnsavedChanges && (
+                <button
+                  type="submit"
+                  form="academic-profile-form"
+                  disabled={savingProfile}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg cc-btn-primary text-xs font-semibold shrink-0 whitespace-nowrap disabled:opacity-60"
                 >
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.code} · {d.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1">Course / Degree</label>
-                <input
-                  type="text"
-                  value={courseName}
-                  onChange={(e) => setCourseName(e.target.value)}
-                  className="cc-input w-full px-3 py-2 text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium mb-1">Current Semester</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={12}
-                  value={semester}
-                  onChange={(e) => setSemester(Number(e.target.value) || 5)}
-                  className="cc-input w-full px-3 py-2 text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1">Target Attendance %</label>
-                <input
-                  type="number"
-                  min={50}
-                  max={100}
-                  value={targetAttendance}
-                  onChange={(e) => setTargetAttendance(Number(e.target.value) || 75)}
-                  className="cc-input w-full px-3 py-2 text-sm font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 pt-1">
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors"
-              >
-                Save Profile
-              </button>
-              {saved && (
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Changes saved
-                </span>
+                  {savingProfile ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Save className="w-3.5 h-3.5" />
+                  )}
+                  Save
+                </button>
               )}
             </div>
-          </form>
+
+            <form id="academic-profile-form" onSubmit={handleSave} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label htmlFor="profile-fullname-input" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    id="profile-fullname-input"
+                    type="text"
+                    required
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="e.g. Rajeev Singh"
+                    className="cc-input w-full px-3 py-2.5 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="profile-roll-input" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Roll / ID Number
+                  </label>
+                  <input
+                    id="profile-roll-input"
+                    type="text"
+                    value={rollNumber}
+                    onChange={(e) => setRollNumber(e.target.value)}
+                    className="cc-input w-full px-3 py-2.5 text-sm font-mono min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label htmlFor="profile-dept-select" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Department
+                  </label>
+                  <select
+                    id="profile-dept-select"
+                    value={departmentId}
+                    onChange={(e) => setDepartmentId(e.target.value)}
+                    className="cc-input w-full px-3 py-2.5 text-sm min-h-[44px]"
+                  >
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.code} · {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="profile-course-input" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Course / Degree
+                  </label>
+                  <input
+                    id="profile-course-input"
+                    type="text"
+                    value={courseName}
+                    onChange={(e) => setCourseName(e.target.value)}
+                    placeholder="B.Tech Computer Science"
+                    className="cc-input w-full px-3 py-2.5 text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="profile-semester-input" className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Current Semester
+                    </label>
+                    <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                      1–12
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSemester((prev) => Math.max(1, prev - 1))}
+                      disabled={semester <= 1}
+                      aria-label="Decrease semester"
+                      className="min-w-[44px] min-h-[44px] rounded-xl cc-btn-secondary flex items-center justify-center shrink-0 disabled:opacity-40"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <input
+                      id="profile-semester-input"
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={12}
+                      value={semester}
+                      onChange={(e) => {
+                        const raw = Number(e.target.value);
+                        if (!Number.isNaN(raw) && e.target.value !== '') {
+                          setSemester(Math.max(1, Math.min(12, Math.round(raw))));
+                        }
+                      }}
+                      className="cc-input flex-1 min-w-0 h-[44px] px-2 text-center text-sm font-mono font-semibold tabular-nums"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSemester((prev) => Math.min(12, prev + 1))}
+                      disabled={semester >= 12}
+                      aria-label="Increase semester"
+                      className="min-w-[44px] min-h-[44px] rounded-xl cc-btn-secondary flex items-center justify-center shrink-0 disabled:opacity-40"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="profile-attendance-input" className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Target Attendance %
+                    </label>
+                    <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                      50%–100%
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setTargetAttendance((prev) => Math.max(50, prev - 1))}
+                      disabled={targetAttendance <= 50}
+                      aria-label="Decrease target attendance"
+                      className="min-w-[44px] min-h-[44px] rounded-xl cc-btn-secondary flex items-center justify-center shrink-0 disabled:opacity-40"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <div className="relative flex-1 min-w-0">
+                      <input
+                        id="profile-attendance-input"
+                        type="number"
+                        inputMode="numeric"
+                        min={50}
+                        max={100}
+                        value={targetAttendance}
+                        onChange={(e) => {
+                          const raw = Number(e.target.value);
+                          if (!Number.isNaN(raw) && e.target.value !== '') {
+                            setTargetAttendance(Math.max(50, Math.min(100, Math.round(raw))));
+                          }
+                        }}
+                        className="cc-input w-full h-[44px] pl-2 pr-6 text-center text-sm font-mono font-semibold tabular-nums"
+                      />
+                      <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 dark:text-slate-400">
+                        %
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTargetAttendance((prev) => Math.min(100, prev + 1))}
+                      disabled={targetAttendance >= 100}
+                      aria-label="Increase target attendance"
+                      className="min-w-[44px] min-h-[44px] rounded-xl cc-btn-secondary flex items-center justify-center shrink-0 disabled:opacity-40"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {saveError && (
+                <div
+                  role="alert"
+                  className="p-3 rounded-xl bg-red-50 dark:bg-red-950/35 border border-red-200 dark:border-red-900/60 text-xs text-red-700 dark:text-red-300"
+                >
+                  {saveError}
+                </div>
+              )}
+
+              {saved && (
+                <div
+                  role="status"
+                  className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/35 border border-emerald-200 dark:border-emerald-900/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 text-xs"
+                >
+                  <span className="text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    Profile saved! Updated on your Dashboard Home Screen.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveView('dashboard')}
+                    className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-300 hover:underline self-start sm:self-auto"
+                  >
+                    Go to Dashboard <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <div className="pt-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl cc-btn-primary text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {savingProfile ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Saving Changes...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" /> Save Profile Changes
+                    </>
+                  )}
+                </button>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {hasUnsavedChanges
+                    ? 'You have unsaved profile edits'
+                    : 'All profile details synced'}
+                </span>
+              </div>
+            </form>
           </section>
         </div>
 

@@ -83,8 +83,8 @@ export async function ensureUserProfile(params: {
       role: isBootstrappedAdmin ? 'admin' : 'student',
       departmentId: 'dept_cse',
       courseName: 'B.Tech Computer Science',
-      semester: 5,
-      rollNumber: isBootstrappedAdmin ? 'ADMIN-01' : `CS26-${params.uid.slice(0, 4).toUpperCase()}`,
+      semester: 3,
+      rollNumber: isBootstrappedAdmin ? 'ADMIN-01' : `CS25-${params.uid.slice(0, 4).toUpperCase()}`,
       avatarUrl: clampStr(params.avatarUrl || '', 500),
       targetAttendance: 75,
       createdAt: serverTimestamp(),
@@ -121,11 +121,11 @@ export async function updateUserProfile(
   if (updates.displayName !== undefined) cleanUpdates.displayName = clampStr(updates.displayName, 100);
   if (updates.departmentId !== undefined) cleanUpdates.departmentId = clampStr(updates.departmentId, 64);
   if (updates.courseName !== undefined) cleanUpdates.courseName = clampStr(updates.courseName, 120);
-  if (updates.semester !== undefined) cleanUpdates.semester = Math.max(1, Math.min(12, Math.floor(updates.semester)));
+  if (updates.semester !== undefined) cleanUpdates.semester = Math.max(1, Math.min(12, Math.round(updates.semester)));
   if (updates.rollNumber !== undefined) cleanUpdates.rollNumber = clampStr(updates.rollNumber, 40);
   if (updates.avatarUrl !== undefined) cleanUpdates.avatarUrl = clampStr(updates.avatarUrl, 500);
   if (updates.targetAttendance !== undefined) {
-    cleanUpdates.targetAttendance = Math.max(50, Math.min(100, Number(updates.targetAttendance)));
+    cleanUpdates.targetAttendance = Math.max(50, Math.min(100, Math.round(Number(updates.targetAttendance))));
   }
 
   try {
@@ -136,7 +136,11 @@ export async function updateUserProfile(
     if (cleanUpdates.courseName !== undefined) rosterUpdates.courseName = cleanUpdates.courseName;
     if (cleanUpdates.semester !== undefined) rosterUpdates.semester = cleanUpdates.semester;
     if (cleanUpdates.rollNumber !== undefined) rosterUpdates.rollNumber = cleanUpdates.rollNumber;
-    await updateDoc(doc(db, 'studentRosters', uid), rosterUpdates);
+    try {
+      await updateDoc(doc(db, 'studentRosters', uid), rosterUpdates);
+    } catch {
+      // Ignore if studentRosters mirror doc was not created yet
+    }
   } catch (err) {
     handleFirestoreError(err, OperationType.UPDATE, `users/${uid}`);
   }
@@ -628,7 +632,7 @@ export async function seedInstitutionCatalogData(uid: string, role: UserRole): P
         institutionName: 'National Institute of Engineering & Sciences',
         defaultRequiredAttendance: 75,
         academicYear: '2026-27',
-        activeSemester: 5,
+        activeSemester: 3,
         updatedByUid: uid,
         updatedAt: serverTimestamp(),
       });

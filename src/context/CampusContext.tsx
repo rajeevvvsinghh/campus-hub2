@@ -280,6 +280,40 @@ function writeLocalAvatarOverride(uid: string, value: string | null): void {
   }
 }
 
+type EditableProfileFields = Pick<
+  UserProfile,
+  'displayName' | 'departmentId' | 'courseName' | 'semester' | 'rollNumber' | 'targetAttendance'
+>;
+
+function readDemoProfileOverride(role: UserRole): Partial<EditableProfileFields> | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(`skucampus_demo_profile_v1_${role}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? (parsed as Partial<EditableProfileFields>) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDemoProfileOverride(role: UserRole, profile: UserProfile): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const payload: EditableProfileFields = {
+      displayName: profile.displayName,
+      departmentId: profile.departmentId,
+      courseName: profile.courseName,
+      semester: profile.semester,
+      rollNumber: profile.rollNumber,
+      targetAttendance: profile.targetAttendance,
+    };
+    localStorage.setItem(`skucampus_demo_profile_v1_${role}`, JSON.stringify(payload));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export const CampusProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -423,12 +457,12 @@ export const CampusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         } else {
           setProfile({
             uid: user.uid,
-            displayName: user.displayName || user.email?.split('@')[0] || 'Student',
+            displayName: user.displayName || user.email?.split('@')[0] || 'Rajeev Singh',
             email: user.email || '',
             role: 'student',
             departmentId: 'dept_cse',
             courseName: 'B.Tech Computer Science',
-            semester: 5,
+            semester: 3,
             rollNumber: 'PENDING',
             avatarUrl: user.photoURL || '',
             targetAttendance: 75,
@@ -551,7 +585,21 @@ export const CampusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const enterDemoMode = (role: UserRole = 'student') => {
     const demoUid = 'demo_student_01';
-    const demoName = role === 'faculty' ? 'Dr. Meera Kulkarni' : role === 'admin' ? 'Campus Administrator' : 'Aarav Sharma';
+    const baseName = role === 'faculty' ? 'Dr. Meera Kulkarni' : role === 'admin' ? 'Campus Administrator' : 'Rajeev Singh';
+    const savedOverride = readDemoProfileOverride(role);
+    const demoName = savedOverride?.displayName?.trim() || baseName;
+    const demoSemester =
+      typeof savedOverride?.semester === 'number'
+        ? Math.max(1, Math.min(12, Math.round(savedOverride.semester)))
+        : 3;
+    const demoCourse = savedOverride?.courseName?.trim() || 'B.Tech Computer Science';
+    const demoDept = savedOverride?.departmentId?.trim() || 'dept_cse';
+    const demoRoll = savedOverride?.rollNumber?.trim() || (role === 'student' ? '25CSE1042' : 'FAC-CS09');
+    const demoTargetAttendance =
+      typeof savedOverride?.targetAttendance === 'number'
+        ? Math.max(50, Math.min(100, Math.round(savedOverride.targetAttendance)))
+        : 75;
+
     const localOverride = readLocalAvatarOverride(demoUid);
     const demoAvatar =
       localOverride === '__REMOVED__'
@@ -561,14 +609,14 @@ export const CampusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setProfile({
       uid: demoUid,
       displayName: demoName,
-      email: role === 'faculty' ? 'meera.kulkarni@campus.edu' : role === 'admin' ? 'admin@campus.edu' : 'aarav.sharma@campus.edu',
+      email: role === 'faculty' ? 'meera.kulkarni@campus.edu' : role === 'admin' ? 'admin@campus.edu' : 'rajeev.singh@campus.edu',
       role,
-      departmentId: 'dept_cse',
-      courseName: 'B.Tech Computer Science',
-      semester: 5,
-      rollNumber: role === 'student' ? '24CSE1042' : 'FAC-CS09',
+      departmentId: demoDept,
+      courseName: demoCourse,
+      semester: demoSemester,
+      rollNumber: demoRoll,
       avatarUrl: demoAvatar,
-      targetAttendance: 75,
+      targetAttendance: demoTargetAttendance,
     });
     setActiveRoleView(role);
     setDepartments(SAMPLE_DEPARTMENTS);
@@ -582,14 +630,14 @@ export const CampusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setTimetable(SAMPLE_TIMETABLE);
     setPlatformSettings(DEFAULT_PLATFORM_SETTINGS);
     setStudentRoster([
-      { uid: demoUid, displayName: 'Aarav Sharma', rollNumber: '24CSE1042', departmentId: 'dept_cse', courseName: 'B.Tech Computer Science', semester: 5 },
-      { uid: 'demo_student_02', displayName: 'Diya Patel', rollNumber: '24CSE1018', departmentId: 'dept_cse', courseName: 'B.Tech Computer Science', semester: 5 },
-      { uid: 'demo_student_03', displayName: 'Kabir Verma', rollNumber: '24CSE1075', departmentId: 'dept_cse', courseName: 'B.Tech Computer Science', semester: 5 },
+      { uid: demoUid, displayName: demoName, rollNumber: demoRoll, departmentId: demoDept, courseName: demoCourse, semester: demoSemester },
+      { uid: 'demo_student_02', displayName: 'Diya Patel', rollNumber: '25CSE1018', departmentId: 'dept_cse', courseName: 'B.Tech Computer Science', semester: 3 },
+      { uid: 'demo_student_03', displayName: 'Kabir Verma', rollNumber: '25CSE1075', departmentId: 'dept_cse', courseName: 'B.Tech Computer Science', semester: 3 },
     ]);
     setAllUsers([
-      { uid: demoUid, displayName: 'Aarav Sharma', email: 'aarav.sharma@campus.edu', role: 'student', departmentId: 'dept_cse', courseName: 'B.Tech Computer Science', semester: 5, rollNumber: '24CSE1042', avatarUrl: '', targetAttendance: 75 },
-      { uid: 'demo_faculty_01', displayName: 'Dr. Meera Kulkarni', email: 'meera.kulkarni@campus.edu', role: 'faculty', departmentId: 'dept_cse', courseName: 'Computer Science', semester: 5, rollNumber: 'FAC-CS01', avatarUrl: '', targetAttendance: 75 },
-      { uid: 'demo_admin_01', displayName: 'Campus Administrator', email: 'admin@campus.edu', role: 'admin', departmentId: 'dept_cse', courseName: 'Administration', semester: 5, rollNumber: 'ADM-01', avatarUrl: '', targetAttendance: 75 },
+      { uid: demoUid, displayName: demoName, email: 'rajeev.singh@campus.edu', role: 'student', departmentId: demoDept, courseName: demoCourse, semester: demoSemester, rollNumber: demoRoll, avatarUrl: '', targetAttendance: demoTargetAttendance },
+      { uid: 'demo_faculty_01', displayName: 'Dr. Meera Kulkarni', email: 'meera.kulkarni@campus.edu', role: 'faculty', departmentId: 'dept_cse', courseName: 'Computer Science', semester: 3, rollNumber: 'FAC-CS01', avatarUrl: '', targetAttendance: 75 },
+      { uid: 'demo_admin_01', displayName: 'Campus Administrator', email: 'admin@campus.edu', role: 'admin', departmentId: 'dept_cse', courseName: 'Administration', semester: 3, rollNumber: 'ADM-01', avatarUrl: '', targetAttendance: 75 },
     ]);
     setBookmarks([
       { id: `${demoUid}_mat_os_u1`, userId: demoUid, materialId: 'mat_os_u1', isBookmarked: true },
@@ -703,23 +751,79 @@ export const CampusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     updates: Partial<Pick<UserProfile, 'displayName' | 'departmentId' | 'courseName' | 'semester' | 'rollNumber' | 'avatarUrl' | 'targetAttendance'>>
   ) => {
     if (!profile) return;
-    const nextProfile = { ...profile, ...updates };
+    const sanitizedUpdates: typeof updates = { ...updates };
+    if (sanitizedUpdates.displayName !== undefined) {
+      const trimmedName = sanitizedUpdates.displayName.trim().slice(0, 100);
+      if (!trimmedName) {
+        throw new Error('Full Name cannot be empty.');
+      }
+      sanitizedUpdates.displayName = trimmedName;
+    }
+    if (sanitizedUpdates.courseName !== undefined) {
+      sanitizedUpdates.courseName = sanitizedUpdates.courseName.trim().slice(0, 120);
+    }
+    if (sanitizedUpdates.rollNumber !== undefined) {
+      sanitizedUpdates.rollNumber = sanitizedUpdates.rollNumber.trim().slice(0, 40);
+    }
+    if (sanitizedUpdates.departmentId !== undefined) {
+      sanitizedUpdates.departmentId = sanitizedUpdates.departmentId.trim().slice(0, 64);
+    }
+    if (sanitizedUpdates.semester !== undefined) {
+      sanitizedUpdates.semester = Math.max(1, Math.min(12, Math.round(Number(sanitizedUpdates.semester) || 3)));
+    }
+    if (sanitizedUpdates.targetAttendance !== undefined) {
+      sanitizedUpdates.targetAttendance = Math.max(
+        50,
+        Math.min(100, Math.round(Number(sanitizedUpdates.targetAttendance) || 75))
+      );
+    }
+
+    const nextProfile: UserProfile = { ...profile, ...sanitizedUpdates };
     setProfile(nextProfile);
-    if (updates.avatarUrl !== undefined) {
-      if (updates.avatarUrl === '') {
+
+    if (sanitizedUpdates.avatarUrl !== undefined) {
+      if (sanitizedUpdates.avatarUrl === '') {
         writeLocalAvatarOverride(profile.uid, '__REMOVED__');
-      } else if (updates.avatarUrl.startsWith('data:')) {
-        writeLocalAvatarOverride(profile.uid, updates.avatarUrl);
+      } else if (sanitizedUpdates.avatarUrl.startsWith('data:')) {
+        writeLocalAvatarOverride(profile.uid, sanitizedUpdates.avatarUrl);
       } else {
         writeLocalAvatarOverride(profile.uid, null);
       }
     }
-    if (!isDemoMode) {
-      const firestoreUpdates = { ...updates };
-      if (firestoreUpdates.avatarUrl && firestoreUpdates.avatarUrl.length > 500) {
-        delete firestoreUpdates.avatarUrl;
+
+    if (isDemoMode) {
+      writeDemoProfileOverride(profile.role, nextProfile);
+      setStudentRoster((prev) =>
+        prev.map((entry) =>
+          entry.uid === profile.uid
+            ? {
+                ...entry,
+                displayName: nextProfile.displayName,
+                rollNumber: nextProfile.rollNumber,
+                departmentId: nextProfile.departmentId,
+                courseName: nextProfile.courseName,
+                semester: nextProfile.semester,
+              }
+            : entry
+        )
+      );
+      setAllUsers((prev) =>
+        prev.map((entry) => (entry.uid === profile.uid ? { ...entry, ...nextProfile } : entry))
+      );
+      return;
+    }
+
+    const firestoreUpdates = { ...sanitizedUpdates };
+    if (firestoreUpdates.avatarUrl && firestoreUpdates.avatarUrl.length > 500) {
+      delete firestoreUpdates.avatarUrl;
+    }
+    await updateUserProfile(profile.uid, firestoreUpdates);
+    if (sanitizedUpdates.displayName && auth.currentUser) {
+      try {
+        await updateProfile(auth.currentUser, { displayName: sanitizedUpdates.displayName });
+      } catch {
+        // Non-blocking: Firestore profile is authoritative
       }
-      await updateUserProfile(profile.uid, firestoreUpdates);
     }
   };
 
