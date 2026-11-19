@@ -62,6 +62,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     materials,
     exams,
     announcements,
+    studyTasks,
     subjects,
     notifications,
     readNotificationIds,
@@ -193,8 +194,19 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           view: 'announcements',
         })
       );
+    studyTasks
+      .filter((t) => t.title.toLowerCase().includes(q) || t.subjectName.toLowerCase().includes(q))
+      .slice(0, 3)
+      .forEach((t) =>
+        results.push({
+          id: `sr_task_${t.id}`,
+          title: t.title,
+          subtitle: `Personal Task · ${t.subjectName} · Due ${t.dueDate || 'No date'}`,
+          view: 'dashboard',
+        })
+      );
     return results;
-  }, [globalSearchQuery, materials, subjects, exams, announcements]);
+  }, [globalSearchQuery, materials, subjects, exams, announcements, studyTasks]);
 
   const handleNavClick = (view: ActiveView) => {
     setActiveView(view);
@@ -380,7 +392,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Global Search */}
-            <div className="relative hidden md:block w-64 lg:w-80">
+            <div className="relative hidden sm:block w-48 md:w-64 lg:w-80">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="search"
@@ -388,15 +400,15 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setTimeout(() => setSearchFocused(false), 180)}
                 onChange={(e) => setGlobalSearchQuery(e.target.value)}
-                placeholder="Search notes, books, syllabus..."
+                placeholder="Search materials, tasks, announcements..."
                 aria-label="Global academic search"
                 className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm cc-input"
               />
               {searchFocused && globalSearchQuery.trim() && (
-                <div className="absolute left-0 right-0 mt-2 cc-modal rounded-xl overflow-hidden z-40">
+                <div className="absolute left-0 right-0 mt-2 cc-modal rounded-xl overflow-hidden z-40 shadow-xl">
                   {searchResults.length === 0 ? (
                     <div className="p-3.5 text-xs text-slate-500 dark:text-slate-400">
-                      No matching study materials, books, subjects, or exams.
+                      No matching study materials, books, tasks, or announcements.
                     </div>
                   ) : (
                     <div className="divide-y divide-slate-100 dark:divide-white/[0.06]">

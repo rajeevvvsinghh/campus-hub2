@@ -104,9 +104,12 @@ export const MaterialsLibraryView: React.FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadNotice, setUploadNotice] = useState<{ kind: 'success' | 'warning'; text: string } | null>(null);
 
+  const canUpload = activeRoleView === 'admin' || activeRoleView === 'faculty';
+
   const openUploadModal = (presetType?: MaterialType) => {
+    if (!canUpload) return;
     setUploadError(null);
-    setUpOfficial(activeRoleView !== 'student');
+    setUpOfficial(true);
     if (presetType) {
       setUpType(presetType);
     }
@@ -338,32 +341,34 @@ export const MaterialsLibraryView: React.FC = () => {
           </p>
         </div>
 
-        <div className="relative z-10 flex flex-wrap items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => openUploadModal('books')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-[#141925] hover:bg-slate-50 dark:hover:bg-white/[0.06] text-xs font-medium text-slate-800 dark:text-slate-100 transition-colors whitespace-nowrap"
-          >
-            <Book className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            Upload Book
-          </button>
-          <button
-            type="button"
-            onClick={() => openUploadModal('syllabus')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-[#141925] hover:bg-slate-50 dark:hover:bg-white/[0.06] text-xs font-medium text-slate-800 dark:text-slate-100 transition-colors whitespace-nowrap"
-          >
-            <ScrollText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            Upload Syllabus
-          </button>
-          <button
-            type="button"
-            onClick={() => openUploadModal('notes')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-semibold transition-colors whitespace-nowrap shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            {activeRoleView === 'student' ? 'Add Study Note' : 'Upload Official Material'}
-          </button>
-        </div>
+        {canUpload && (
+          <div className="relative z-10 flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => openUploadModal('books')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-[#141925] hover:bg-slate-50 dark:hover:bg-white/[0.06] text-xs font-medium text-slate-800 dark:text-slate-100 transition-colors whitespace-nowrap"
+            >
+              <Book className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              Upload Book
+            </button>
+            <button
+              type="button"
+              onClick={() => openUploadModal('syllabus')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-[#141925] hover:bg-slate-50 dark:hover:bg-white/[0.06] text-xs font-medium text-slate-800 dark:text-slate-100 transition-colors whitespace-nowrap"
+            >
+              <ScrollText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              Upload Syllabus
+            </button>
+            <button
+              type="button"
+              onClick={() => openUploadModal('notes')}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-semibold transition-colors whitespace-nowrap shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              Upload Official Material
+            </button>
+          </div>
+        )}
       </section>
 
       {uploadNotice && (
@@ -547,7 +552,7 @@ export const MaterialsLibraryView: React.FC = () => {
             >
               Reset Filters
             </button>
-            {(selectedType === 'books' || selectedType === 'syllabus') && (
+            {canUpload && (selectedType === 'books' || selectedType === 'syllabus') && (
               <button
                 type="button"
                 onClick={() => openUploadModal(selectedType)}

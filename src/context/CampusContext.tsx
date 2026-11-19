@@ -912,6 +912,9 @@ export const CampusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const uploadAndCreateMaterial: CampusContextValue['uploadAndCreateMaterial'] = async (payload) => {
     if (!profile) return { storageUsed: false, materialId: '', fileUrl: '' };
+    if (activeRoleView === 'student' || profile.role === 'student') {
+      throw new Error('Only administrators and faculty are permitted to upload study materials, books, and notes.');
+    }
     const id = makeSafeId('mat');
     let fileUrl = '';
     let storageUsed = false;
